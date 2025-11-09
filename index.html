@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Voice Abuse Killer | Comment Filter</title>
+  <style>
+    body {
+      font-family: "Poppins", sans-serif;
+      background: linear-gradient(135deg, #e0f2fe, #f3e8ff);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      color: #1e293b;
+    }
+
+    .card {
+      background: #ffffff;
+      padding: 40px 35px;
+      border-radius: 24px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      width: 90%;
+      max-width: 420px;
+      text-align: center;
+      transition: all 0.3s ease;
+      animation: fadeIn 0.6s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: #2563eb;
+      margin-bottom: 10px;
+    }
+
+    p {
+      color: #475569;
+      font-size: 0.95rem;
+      margin-bottom: 25px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 15px;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      font-size: 1rem;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    input:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+
+    button {
+      margin-top: 20px;
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(90deg, #3b82f6, #9333ea);
+      color: white;
+      font-size: 1rem;
+      font-weight: 500;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      background: linear-gradient(90deg, #2563eb, #7e22ce);
+      transform: scale(1.02);
+    }
+
+    #result, #sarcasm {
+      margin-top: 20px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      transition: color 0.3s ease;
+    }
+
+    #result.safe {
+      color: #16a34a;
+    }
+
+    #result.warning {
+      color: #f59e0b;
+    }
+
+    #result.blocked {
+      color: #dc2626;
+    }
+
+    #sarcasm {
+      font-size: 1rem;
+      color: #64748b;
+      margin-top: 10px;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="card">
+    <h1>💬 Voice Abuse Killer</h1>
+    <p>Detect and block harmful or sarcastic comments before they’re posted.</p>
+
+    <input type="text" id="commentInput" placeholder="Type your comment..." />
+    <button onclick="checkComment()">Check Comment</button>
+
+    <div id="result"></div>
+    <div id="sarcasm"></div>
+  </div>
+
+  <script>
+    let warningCount = 0;
+
+    async function checkComment() {
+      const comment = document.getElementById("commentInput").value.trim();
+      const resultDiv = document.getElementById("result");
+      const sarcasmDiv = document.getElementById("sarcasm");
+
+      if (!comment) {
+        resultDiv.textContent = "⚠️ Please enter a comment.";
+        resultDiv.className = "warning";
+        sarcasmDiv.textContent = "";
+        return;
+      }
+
+      try {
+        const res = await fetch("http://127.0.0.1:5000/check_comment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ comment }),
+        });
+
+        const data = await res.json();
+
+        if (data.error) {
+          resultDiv.textContent = `❌ Error: ${data.error}`;
+          resultDiv.className = "blocked";
+          sarcasmDiv.textContent = "";
+          return;
+        }
+
+        // Display sarcasm result
+        sarcasmDiv.textContent = data.sarcasm || "";
+
+        // Handle abuse detection
+        if (data.result === "Offensive") {
+          warningCount++;
+          if (warningCount === 1) {
+            resultDiv.textContent = "⚠️ Warning: Your comment may be offensive. Please edit and try again.";
+            resultDiv.className = "warning";
+          } else if (warningCount >= 2) {
+            resultDiv.textContent = "🚫 Comment Blocked: You cannot post abusive content.";
+            resultDiv.className = "blocked";
+            document.getElementById("commentInput").disabled = true;
+          }
+        } else if (data.result === "Safe") {
+          resultDiv.textContent = "✅ Comment allowed safely.";
+          resultDiv.className = "safe";
+          warningCount = 0;
+        } else if (data.result === "Neutral") {
+          resultDiv.textContent = "😐 Neutral comment.";
+          resultDiv.className = "safe";
+          warningCount = 0;
+        } else {
+          resultDiv.textContent = "🤔 Unknown result.";
+          resultDiv.className = "warning";
+        }
+
+      } catch (err) {
+        resultDiv.textContent = `❌ Server error: ${err.message}`;
+        resultDiv.className = "blocked";
+        sarcasmDiv.textContent = "";
+      }
+    }
+  </script>
+</body>
+</html>
