@@ -1,3 +1,6 @@
+import os
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import joblib
@@ -69,3 +72,4 @@ def run_flask():
 if __name__ == "__main__":
     print("🚀 Starting Flask server...")
     threading.Thread(target=run_flask).start()
+
