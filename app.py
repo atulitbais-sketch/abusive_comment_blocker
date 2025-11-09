@@ -18,7 +18,9 @@ model = joblib.load("comment_model.pkl")
 vectorizer = joblib.load("tfidf_vectorizer.pkl")
 
 print("✅ Model and vectorizer loaded successfully!")
-
+@app.route('/')
+def home():
+    return "✅ Flask backend is running! Use POST /check_comment to test comments."
 
 @app.route("/check_comment", methods=["POST"])
 def check_comment():
@@ -53,3 +55,4 @@ def run_flask():
 if __name__ == "__main__":
     print("🚀 Starting Flask server...")
     threading.Thread(target=run_flask).start()
+
