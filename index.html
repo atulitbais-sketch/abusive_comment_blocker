@@ -146,7 +146,7 @@
       }
 
       try {
-        const res = await fetch("http://127.0.0.1:5000/check_comment", {
+       const res = await fetch("https://voice-abuse-killer.onrender.com/check_comment", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ comment }),
@@ -197,3 +197,4 @@
   </script>
 </body>
 </html>
+
